@@ -6,11 +6,18 @@ from dotenv import load_dotenv
 
 from src.isbn_detector import ISBNDetector
 from src.book_api_client import BookAPIClient
+from src.notion_client import NotionClient
 
 load_dotenv()
 
 if "detection_history" not in st.session_state:
     st.session_state.detection_history = []
+
+if "notion_token" not in st.session_state:
+    st.session_state.notion_token = os.getenv("NOTION_API_TOKEN", "")
+
+if "notion_database_id" not in st.session_state:
+    st.session_state.notion_database_id = os.getenv("NOTION_DATABASE_ID", "")
 
 st.set_page_config(
     page_title="ISBN Book Reader",
@@ -115,6 +122,19 @@ with tab1:
                             with st.expander("📝 説明"):
                                 st.write(book.description)
 
+                        st.write("")
+                        if st.session_state.notion_token and st.session_state.notion_database_id:
+                            if st.button(f"📝 Notionに登録", key=f"notion_{isbn}"):
+                                notion_client = NotionClient(st.session_state.notion_token)
+                                result = notion_client.add_book_to_database(
+                                    st.session_state.notion_database_id,
+                                    book
+                                )
+                                if result:
+                                    st.success("✅ Notionデータベースに登録しました！")
+                                else:
+                                    st.error("❌ Notionへの登録に失敗しました。")
+
                     st.session_state.detection_history.insert(0, {
                         "isbn": isbn,
                         "book": book,
@@ -162,6 +182,49 @@ with tab2:
 
 with tab3:
     st.subheader("設定")
+
+    st.write("**Notion連携設定**")
+
+    notion_token_input = st.text_input(
+        "Notion API トークン",
+        value=st.session_state.notion_token,
+        type="password",
+        help="Notion Integration のシークレットトークンを入力"
+    )
+
+    notion_db_input = st.text_input(
+        "Notion データベースID",
+        value=st.session_state.notion_database_id,
+        help="書籍を登録するNotionデータベースのID（32桁の英数字）"
+    )
+
+    if st.button("Notion設定を保存"):
+        st.session_state.notion_token = notion_token_input
+        st.session_state.notion_database_id = notion_db_input
+        st.success("✅ Notion設定を保存しました！")
+
+    if st.session_state.notion_token and st.session_state.notion_database_id:
+        st.info("✅ Notion連携が有効です")
+
+        with st.expander("📚 Notionデータベースの必要プロパティ"):
+            st.markdown("""
+            以下のプロパティを持つデータベースを作成してください：
+
+            | プロパティ名 | タイプ |
+            |------------|--------|
+            | 名前 | タイトル |
+            | ISBN | テキスト |
+            | 著者 | テキスト |
+            | 出版社 | テキスト |
+            | 発行日 | 日付 |
+            | ページ数 | 数値 |
+
+            表紙画像は自動的にページカバーとして設定されます。
+            """)
+    else:
+        st.warning("⚠️ Notion連携を使用するには、上記の設定が必要です")
+
+    st.write("---")
 
     st.write("**Google Books API キー**")
     api_key = st.text_input(
