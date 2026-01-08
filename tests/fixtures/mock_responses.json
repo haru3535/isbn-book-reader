@@ -1,0 +1,63 @@
+{
+  "openbd_success": [
+    {
+      "summary": {
+        "isbn": "9784839974206",
+        "title": "リーダブルコード",
+        "author": "Dustin Boswell / Trevor Foucher",
+        "publisher": "オライリー・ジャパン",
+        "pubdate": "20120623",
+        "cover": "https://cover.openbd.jp/9784839974206.jpg"
+      },
+      "onix": {
+        "CollateralDetail": {
+          "TextContent": [
+            {
+              "Text": "より良いコードを書くためのシンプルで実践的なテクニック"
+            }
+          ]
+        },
+        "DescriptiveDetail": {
+          "Extent": [
+            {
+              "ExtentValue": "260",
+              "ExtentUnit": "03"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "openbd_not_found": [
+    null
+  ],
+  "google_books_success": {
+    "kind": "books#volumes",
+    "totalItems": 1,
+    "items": [
+      {
+        "volumeInfo": {
+          "title": "リーダブルコード",
+          "authors": ["Dustin Boswell", "Trevor Foucher"],
+          "publisher": "オライリー・ジャパン",
+          "publishedDate": "2012-06-23",
+          "description": "より良いコードを書くためのシンプルで実践的なテクニック",
+          "pageCount": 260,
+          "imageLinks": {
+            "thumbnail": "http://books.google.com/books/content?id=test"
+          },
+          "industryIdentifiers": [
+            {
+              "type": "ISBN_13",
+              "identifier": "9784839974206"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "google_books_not_found": {
+    "kind": "books#volumes",
+    "totalItems": 0
+  }
+}
