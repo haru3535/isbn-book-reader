@@ -15,6 +15,10 @@ class BookAPIClient:
 
         book = self.openbd.get_book_info(isbn)
         if book:
+            if not book.cover_image_url:
+                google_book = self.google.get_book_info(isbn)
+                if google_book and google_book.cover_image_url:
+                    book.cover_image_url = google_book.cover_image_url
             self._cache[isbn] = book
             return book
 

@@ -59,6 +59,8 @@ class OpenBDClient:
                 published_date = f"{pubdate[0:4]}-{pubdate[4:6]}-{pubdate[6:8]}"
 
             cover_url = summary.get('cover')
+            if cover_url == '':
+                cover_url = None
 
             page_count = None
             descriptive_detail = onix.get('DescriptiveDetail', {})

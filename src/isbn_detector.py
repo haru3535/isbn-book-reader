@@ -13,16 +13,22 @@ class ISBNDetector:
         if len(image.shape) == 3:
             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-        preprocessed = self.preprocess_image(image)
-
-        barcodes = pyzbar.decode(preprocessed)
-
         isbns = []
-        for barcode in barcodes:
-            if barcode.type in ['EAN13', 'EAN-13']:
-                code = barcode.data.decode('utf-8')
-                if (code.startswith('978') or code.startswith('979')) and self.validate_isbn(code):
-                    isbns.append(code)
+
+        images_to_try = [
+            image,
+            self.preprocess_image(image),
+            self._preprocess_simple(image),
+            self._preprocess_enhanced(image)
+        ]
+
+        for img in images_to_try:
+            barcodes = pyzbar.decode(img)
+            for barcode in barcodes:
+                if barcode.type in ['EAN13', 'EAN-13']:
+                    code = barcode.data.decode('utf-8')
+                    if (code.startswith('978') or code.startswith('979')) and self.validate_isbn(code):
+                        isbns.append(code)
 
         return list(set(isbns))
 
@@ -44,6 +50,36 @@ class ISBNDetector:
             35, 15
         )
 
+        return binary
+
+    def _preprocess_simple(self, image: np.ndarray) -> np.ndarray:
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image
+
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        return binary
+
+    def _preprocess_enhanced(self, image: np.ndarray) -> np.ndarray:
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image
+
+        denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
+
+        sharpening_kernel = np.array([[-1, -1, -1],
+                                       [-1,  9, -1],
+                                       [-1, -1, -1]])
+        sharpened = cv2.filter2D(denoised, -1, sharpening_kernel)
+
+        binary = cv2.adaptiveThreshold(
+            sharpened, 255,
+            cv2.ADAPTIVE_THRESH_MEAN_C,
+            cv2.THRESH_BINARY,
+            11, 2
+        )
         return binary
 
     def validate_isbn(self, code: str) -> bool:
