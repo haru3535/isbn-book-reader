@@ -55,8 +55,16 @@ class OpenBDClient:
             publisher = summary.get('publisher')
             pubdate = summary.get('pubdate')
             published_date = None
-            if pubdate and len(pubdate) == 8:
-                published_date = f"{pubdate[0:4]}-{pubdate[4:6]}-{pubdate[6:8]}"
+            if pubdate:
+                if len(pubdate) == 8:
+                    # YYYYMMDD形式
+                    published_date = f"{pubdate[0:4]}-{pubdate[4:6]}-{pubdate[6:8]}"
+                elif len(pubdate) == 6:
+                    # YYYYMM形式（日は01とする）
+                    published_date = f"{pubdate[0:4]}-{pubdate[4:6]}-01"
+                elif len(pubdate) == 4:
+                    # YYYY形式（月日は01-01とする）
+                    published_date = f"{pubdate[0:4]}-01-01"
 
             cover_url = summary.get('cover')
             if cover_url == '':
