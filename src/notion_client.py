@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple
 import requests
 from src.openbd_client import BookInfo
 
@@ -17,7 +17,7 @@ class NotionClient:
         self,
         database_id: str,
         book: BookInfo
-    ) -> tuple[Optional[Dict[str, Any]], Optional[str]]:
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
         if not self.api_token:
             return None, "APIトークンが設定されていません"
 
