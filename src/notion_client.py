@@ -26,7 +26,8 @@ class NotionClient:
             if not clean_db_id:
                 return None, "データベースIDの形式が正しくありません"
 
-            properties = self._build_properties(book)
+            property_types = self.get_property_mapping(clean_db_id)
+            properties = self._build_properties(book, property_types)
 
             data = {
                 "parent": {"database_id": clean_db_id},
@@ -73,7 +74,7 @@ class NotionClient:
 
         return formatted_id
 
-    def _build_properties(self, book: BookInfo) -> Dict[str, Any]:
+    def _build_properties(self, book: BookInfo, property_types: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         properties = {}
 
         if book.title:
@@ -86,13 +87,24 @@ class NotionClient:
             }
 
         if book.isbn:
-            properties["ISBN"] = {
-                "rich_text": [
-                    {
-                        "text": {"content": book.isbn}
+            isbn_type = property_types.get("ISBN") if property_types else "rich_text"
+
+            if isbn_type == "number":
+                try:
+                    isbn_numeric = int(book.isbn.replace("-", "").replace(" ", ""))
+                    properties["ISBN"] = {"number": isbn_numeric}
+                except ValueError:
+                    properties["ISBN"] = {
+                        "rich_text": [{"text": {"content": book.isbn}}]
                     }
-                ]
-            }
+            else:
+                properties["ISBN"] = {
+                    "rich_text": [
+                        {
+                            "text": {"content": book.isbn}
+                        }
+                    ]
+                }
 
         if book.authors:
             properties["Author"] = {
