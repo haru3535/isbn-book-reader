@@ -17,9 +17,9 @@ class NotionClient:
         self,
         database_id: str,
         book: BookInfo
-    ) -> Optional[Dict[str, Any]]:
+    ) -> tuple[Optional[Dict[str, Any]], Optional[str]]:
         if not self.api_token:
-            return None
+            return None, "APIトークンが設定されていません"
 
         try:
             properties = self._build_properties(book)
@@ -43,18 +43,19 @@ class NotionClient:
             )
 
             if response.status_code in [200, 201]:
-                return response.json()
+                return response.json(), None
             else:
-                return None
+                error_msg = f"Status {response.status_code}: {response.text}"
+                return None, error_msg
 
-        except Exception:
-            return None
+        except Exception as e:
+            return None, f"エラー: {str(e)}"
 
     def _build_properties(self, book: BookInfo) -> Dict[str, Any]:
         properties = {}
 
         if book.title:
-            properties["名前"] = {
+            properties["Name"] = {
                 "title": [
                     {
                         "text": {"content": book.title}
@@ -72,7 +73,7 @@ class NotionClient:
             }
 
         if book.authors:
-            properties["著者"] = {
+            properties["Author"] = {
                 "rich_text": [
                     {
                         "text": {"content": ", ".join(book.authors)}
@@ -81,7 +82,7 @@ class NotionClient:
             }
 
         if book.publisher:
-            properties["出版社"] = {
+            properties["Publisher"] = {
                 "rich_text": [
                     {
                         "text": {"content": book.publisher}
@@ -90,14 +91,17 @@ class NotionClient:
             }
 
         if book.published_date:
-            properties["発行日"] = {
-                "date": {
-                    "start": book.published_date
+            try:
+                properties["Published"] = {
+                    "date": {
+                        "start": book.published_date
+                    }
                 }
-            }
+            except:
+                pass
 
         if book.page_count:
-            properties["ページ数"] = {
+            properties["Pages"] = {
                 "number": book.page_count
             }
 

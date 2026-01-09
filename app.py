@@ -125,15 +125,19 @@ with tab1:
                         st.write("")
                         if st.session_state.notion_token and st.session_state.notion_database_id:
                             if st.button(f"📝 Notionに登録", key=f"notion_{isbn}"):
-                                notion_client = NotionClient(st.session_state.notion_token)
-                                result = notion_client.add_book_to_database(
-                                    st.session_state.notion_database_id,
-                                    book
-                                )
+                                with st.spinner("Notionに登録中..."):
+                                    notion_client = NotionClient(st.session_state.notion_token)
+                                    result, error = notion_client.add_book_to_database(
+                                        st.session_state.notion_database_id,
+                                        book
+                                    )
                                 if result:
                                     st.success("✅ Notionデータベースに登録しました！")
                                 else:
-                                    st.error("❌ Notionへの登録に失敗しました。")
+                                    st.error(f"❌ Notionへの登録に失敗しました。")
+                                    if error:
+                                        with st.expander("エラー詳細"):
+                                            st.code(error)
 
                     st.session_state.detection_history.insert(0, {
                         "isbn": isbn,
@@ -212,14 +216,18 @@ with tab3:
 
             | プロパティ名 | タイプ |
             |------------|--------|
-            | 名前 | タイトル |
+            | Name | タイトル |
             | ISBN | テキスト |
-            | 著者 | テキスト |
-            | 出版社 | テキスト |
-            | 発行日 | 日付 |
-            | ページ数 | 数値 |
+            | Author | テキスト |
+            | Publisher | テキスト |
+            | Published | 日付 |
+            | Pages | 数値 |
+
+            **重要**: プロパティ名は英語で、完全に一致させてください。
 
             表紙画像は自動的にページカバーとして設定されます。
+
+            詳しいセットアップ方法は NOTION_SETUP.md を参照してください。
             """)
     else:
         st.warning("⚠️ Notion連携を使用するには、上記の設定が必要です")
