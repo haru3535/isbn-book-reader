@@ -127,6 +127,17 @@ with tab1:
                             if st.button(f"📝 Notionに登録", key=f"notion_{isbn}"):
                                 with st.spinner("Notionに登録中..."):
                                     notion_client = NotionClient(st.session_state.notion_token)
+
+                                    # デバッグ情報を表示
+                                    with st.expander("🔍 デバッグ情報"):
+                                        st.write(f"**取得データ:**")
+                                        st.write(f"- Pages: `{book.page_count}`")
+                                        st.write(f"- Published: `{book.published_date}`")
+
+                                        property_types = notion_client.get_property_mapping(st.session_state.notion_database_id)
+                                        st.write(f"**Notionプロパティ型:**")
+                                        st.json(property_types)
+
                                     result, error = notion_client.add_book_to_database(
                                         st.session_state.notion_database_id,
                                         book
