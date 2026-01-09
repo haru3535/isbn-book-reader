@@ -5,6 +5,23 @@ from src.amazon_cover_client import AmazonCoverClient
 
 
 class BookAPIClient:
+    @staticmethod
+    def is_valid_image_url(url: Optional[str]) -> bool:
+        """画像URLが有効な形式（.jpg, .jpeg, .png, .gif, .webp）かチェック"""
+        if not url:
+            return False
+
+        # 画像拡張子のリスト
+        valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']
+        url_lower = url.lower()
+
+        # URLが画像拡張子で終わっているかチェック
+        # クエリパラメータがあってもOK（例: image.jpg?size=large）
+        for ext in valid_extensions:
+            if ext in url_lower:
+                return True
+
+        return False
     def __init__(self, google_api_key: Optional[str] = None):
         self.openbd = OpenBDClient()
         self.google = GoogleBooksClient(api_key=google_api_key)
@@ -37,14 +54,23 @@ class BookAPIClient:
                     book.page_count = openbd_book.page_count
                 if not book.published_date and openbd_book.published_date:
                     book.published_date = openbd_book.published_date
-                if not book.cover_image_url and openbd_book.cover_image_url:
-                    book.cover_image_url = openbd_book.cover_image_url
+                # openBDの画像が有効な形式の場合のみ使用
+                if not self.is_valid_image_url(book.cover_image_url) and openbd_book.cover_image_url:
+                    if self.is_valid_image_url(openbd_book.cover_image_url):
+                        book.cover_image_url = openbd_book.cover_image_url
 
-            # 表紙画像のフォールバック（Amazon画像APIも試す）
-            if not book.cover_image_url:
+            # 表紙画像のフォールバック（無効な形式の場合もAmazonから取得）
+            if not self.is_valid_image_url(book.cover_image_url):
+                print(f"[DEBUG] Invalid or missing image URL, trying Amazon...")
                 amazon_cover = self.amazon.get_cover_url_by_isbn(isbn)
-                if amazon_cover:
+                if amazon_cover and self.is_valid_image_url(amazon_cover):
                     book.cover_image_url = amazon_cover
+                elif book.title:
+                    # タイトルで検索
+                    author = book.authors[0] if book.authors else None
+                    amazon_cover = self.amazon.get_cover_url_by_title(book.title, author)
+                    if amazon_cover and self.is_valid_image_url(amazon_cover):
+                        book.cover_image_url = amazon_cover
 
             self._cache[isbn] = book
             return book
@@ -52,17 +78,17 @@ class BookAPIClient:
         # openBD（最後のフォールバック）
         book = self.openbd.get_book_info(isbn)
         if book:
-            # 表紙画像のフォールバック
-            if not book.cover_image_url:
+            # 表紙画像のフォールバック（無効な形式の場合もAmazonから取得）
+            if not self.is_valid_image_url(book.cover_image_url):
+                print(f"[DEBUG] Invalid or missing image URL from openBD, trying Amazon...")
                 amazon_cover = self.amazon.get_cover_url_by_isbn(isbn)
-                if amazon_cover:
+                if amazon_cover and self.is_valid_image_url(amazon_cover):
                     book.cover_image_url = amazon_cover
-
-            if not book.cover_image_url and book.title:
-                author = book.authors[0] if book.authors else None
-                amazon_cover = self.amazon.get_cover_url_by_title(book.title, author)
-                if amazon_cover:
-                    book.cover_image_url = amazon_cover
+                elif book.title:
+                    author = book.authors[0] if book.authors else None
+                    amazon_cover = self.amazon.get_cover_url_by_title(book.title, author)
+                    if amazon_cover and self.is_valid_image_url(amazon_cover):
+                        book.cover_image_url = amazon_cover
 
             self._cache[isbn] = book
             return book
