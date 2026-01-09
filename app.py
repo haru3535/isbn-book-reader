@@ -84,7 +84,7 @@ with tab1:
 
             for isbn in isbns:
                 with st.spinner(f"書籍情報を取得中（ISBN: {isbn}）..."):
-                    book = api_client.get_book_info(isbn)
+                    book = api_client.get_book_info(isbn, use_cache=False)
 
                 if book:
                     col1, col2 = st.columns([1, 3])
@@ -139,7 +139,12 @@ with tab1:
                                         st.write(f"- **Pages: `{book.page_count}`**")
                                         st.write(f"- **Published: `{book.published_date}`**")
                                         st.write(f"- 説明: `{book.description[:50] if book.description else None}...`")
-                                        st.write(f"- 表紙URL: `{book.cover_image_url[:50] if book.cover_image_url else None}...`")
+                                        st.write(f"- 表紙URL: `{book.cover_image_url[:80] if book.cover_image_url else None}...`")
+
+                                        # 画像URL検証
+                                        from src.book_api_client import BookAPIClient
+                                        is_valid = BookAPIClient.is_valid_image_url(book.cover_image_url)
+                                        st.write(f"- **画像URL有効性: `{is_valid}`** {'✅' if is_valid else '❌ (Notionで表示できない形式)'}")
 
                                         property_types = notion_client.get_property_mapping(st.session_state.notion_database_id)
                                         st.write(f"**Notionプロパティ型:**")
