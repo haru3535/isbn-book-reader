@@ -129,13 +129,23 @@ with tab1:
                                     notion_client = NotionClient(st.session_state.notion_token)
 
                                     # デバッグ情報を表示
-                                    with st.expander("🔍 デバッグ情報"):
-                                        st.write(f"**取得データ:**")
-                                        st.write(f"- Pages: `{book.page_count}`")
-                                        st.write(f"- Published: `{book.published_date}`")
+                                    with st.expander("🔍 デバッグ情報", expanded=True):
+                                        st.write(f"**書籍情報の取得データ:**")
+                                        st.write(f"- ISBN: `{book.isbn}`")
+                                        st.write(f"- データソース: `{book.source}`")
+                                        st.write(f"- タイトル: `{book.title}`")
+                                        st.write(f"- 著者: `{book.authors}`")
+                                        st.write(f"- 出版社: `{book.publisher}`")
+                                        st.write(f"- **Pages: `{book.page_count}`**")
+                                        st.write(f"- **Published: `{book.published_date}`**")
+                                        st.write(f"- 説明: `{book.description[:50] if book.description else None}...`")
+                                        st.write(f"- 表紙URL: `{book.cover_image_url[:50] if book.cover_image_url else None}...`")
 
                                         property_types = notion_client.get_property_mapping(st.session_state.notion_database_id)
                                         st.write(f"**Notionプロパティ型:**")
+                                        if property_types:
+                                            st.write(f"- Published: `{property_types.get('Published')}`")
+                                            st.write(f"- Pages: `{property_types.get('Pages')}`")
                                         st.json(property_types)
 
                                     result, error = notion_client.add_book_to_database(
