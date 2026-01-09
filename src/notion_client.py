@@ -125,19 +125,29 @@ class NotionClient:
             }
 
         if book.published_date:
-            try:
-                properties["Published"] = {
-                    "date": {
-                        "start": book.published_date
+            published_type = property_types.get("Published") if property_types else None
+
+            if published_type == "date":
+                try:
+                    properties["Published"] = {
+                        "date": {"start": book.published_date}
                     }
+                except Exception:
+                    pass
+            elif published_type == "rich_text":
+                properties["Published"] = {
+                    "rich_text": [{"text": {"content": book.published_date}}]
                 }
-            except:
-                pass
 
         if book.page_count:
-            properties["Pages"] = {
-                "number": book.page_count
-            }
+            pages_type = property_types.get("Pages") if property_types else None
+
+            if pages_type == "number":
+                properties["Pages"] = {"number": book.page_count}
+            elif pages_type == "rich_text":
+                properties["Pages"] = {
+                    "rich_text": [{"text": {"content": str(book.page_count)}}]
+                }
 
         if book.cover_image_url:
             cover_type = property_types.get("Cover") if property_types else None
