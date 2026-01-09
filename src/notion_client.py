@@ -139,6 +139,22 @@ class NotionClient:
                 "number": book.page_count
             }
 
+        if book.cover_image_url:
+            cover_type = property_types.get("Cover") if property_types else None
+
+            if cover_type == "files":
+                properties["Cover"] = {
+                    "files": [
+                        {
+                            "type": "external",
+                            "name": "Cover Image",
+                            "external": {
+                                "url": book.cover_image_url
+                            }
+                        }
+                    ]
+                }
+
         return properties
 
     def get_property_mapping(self, database_id: str) -> Optional[Dict[str, str]]:
