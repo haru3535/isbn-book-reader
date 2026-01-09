@@ -26,7 +26,7 @@ class NotionClient:
             if not clean_db_id:
                 return None, "データベースIDの形式が正しくありません"
 
-            property_types = self.get_property_mapping(clean_db_id)
+            property_types = self.get_property_mapping(database_id)
             properties = self._build_properties(book, property_types)
 
             data = {
@@ -146,8 +146,12 @@ class NotionClient:
             return None
 
         try:
+            clean_db_id = self._clean_database_id(database_id)
+            if not clean_db_id:
+                return None
+
             response = requests.get(
-                f"{self.base_url}/databases/{database_id}",
+                f"{self.base_url}/databases/{clean_db_id}",
                 headers=self.headers,
                 timeout=10
             )
