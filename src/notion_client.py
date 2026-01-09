@@ -22,10 +22,14 @@ class NotionClient:
             return None, "APIトークンが設定されていません"
 
         try:
+            clean_db_id = self._clean_database_id(database_id)
+            if not clean_db_id:
+                return None, "データベースIDの形式が正しくありません"
+
             properties = self._build_properties(book)
 
             data = {
-                "parent": {"database_id": database_id},
+                "parent": {"database_id": clean_db_id},
                 "properties": properties
             }
 
@@ -50,6 +54,24 @@ class NotionClient:
 
         except Exception as e:
             return None, f"エラー: {str(e)}"
+
+    def _clean_database_id(self, database_id: str) -> Optional[str]:
+        import re
+
+        db_id = database_id.strip()
+
+        db_id = db_id.split('?')[0]
+
+        db_id = db_id.replace('-', '')
+
+        db_id = re.sub(r'[^a-zA-Z0-9]', '', db_id)
+
+        if len(db_id) != 32:
+            return None
+
+        formatted_id = f"{db_id[0:8]}-{db_id[8:12]}-{db_id[12:16]}-{db_id[16:20]}-{db_id[20:32]}"
+
+        return formatted_id
 
     def _build_properties(self, book: BookInfo) -> Dict[str, Any]:
         properties = {}

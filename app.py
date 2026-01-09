@@ -199,7 +199,8 @@ with tab3:
     notion_db_input = st.text_input(
         "Notion データベースID",
         value=st.session_state.notion_database_id,
-        help="書籍を登録するNotionデータベースのID（32桁の英数字）"
+        help="書籍を登録するNotionデータベースのID（32桁の英数字）。URLの?以降は含めないでください。",
+        placeholder="例: 1e1d8e68479381d78152c6def101615c"
     )
 
     if st.button("Notion設定を保存"):
