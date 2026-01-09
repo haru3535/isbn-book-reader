@@ -244,6 +244,7 @@ with tab3:
             | Publisher | テキスト |
             | Published | 日付 |
             | Pages | 数値 |
+            | Description | テキスト（オプション） |
             | Cover | ファイル＆メディア（オプション） |
 
             **重要**: プロパティ名は英語で、完全に一致させてください。

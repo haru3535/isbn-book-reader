@@ -168,6 +168,14 @@ class NotionClient:
                     ]
                 }
 
+        if book.description:
+            description_type = property_types.get("Description") if property_types else None
+
+            if description_type == "rich_text":
+                properties["Description"] = {
+                    "rich_text": [{"text": {"content": book.description}}]
+                }
+
         return properties
 
     def get_property_mapping(self, database_id: str) -> Optional[Dict[str, str]]:
