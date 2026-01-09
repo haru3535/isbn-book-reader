@@ -51,6 +51,7 @@ class AmazonCoverClient:
         try:
             # Amazon商品ページURL
             url = f"https://www.amazon.co.jp/dp/{isbn}"
+            print(f"[DEBUG Amazon] Fetching {url}")
 
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -59,6 +60,7 @@ class AmazonCoverClient:
             }
 
             response = requests.get(url, headers=headers, timeout=15)
+            print(f"[DEBUG Amazon] Status code: {response.status_code}")
             if response.status_code != 200:
                 return None
 
@@ -112,8 +114,17 @@ class AmazonCoverClient:
             if desc_match:
                 description = desc_match.group(1).strip()
 
+            # デバッグ：取得したデータを表示
+            print(f"[DEBUG Amazon] Extracted data:")
+            print(f"  title: {title}")
+            print(f"  authors: {authors}")
+            print(f"  publisher: {publisher}")
+            print(f"  published_date: {published_date}")
+            print(f"  page_count: {page_count}")
+
             # データが十分取得できた場合のみBookInfoを返す
             if title or authors:
+                print(f"[DEBUG Amazon] Returning BookInfo with page_count={page_count}")
                 return BookInfo(
                     isbn=isbn,
                     title=title,
@@ -125,9 +136,12 @@ class AmazonCoverClient:
                     cover_image_url=cover_url,
                     source="Amazon"
                 )
+            else:
+                print(f"[DEBUG Amazon] No title or authors found, returning None")
 
         except Exception as e:
-            print(f"[DEBUG] Amazon scraping error for ISBN {isbn}: {str(e)}")
-            pass
+            print(f"[DEBUG Amazon] Exception: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
         return None

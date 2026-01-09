@@ -17,10 +17,13 @@ class BookAPIClient:
 
         # 優先順位: Amazon → Google Books → openBD
         # Amazon（最も詳細な情報）
+        print(f"[DEBUG] Trying Amazon for ISBN {isbn}...")
         book = self.amazon.get_book_info(isbn)
         if book:
+            print(f"[DEBUG] Got book from Amazon: title={book.title}, pages={book.page_count}")
             self._cache[isbn] = book
             return book
+        print(f"[DEBUG] Amazon failed, trying Google Books...")
 
         # Google Books（フォールバック）
         book = self.google.get_book_info(isbn)
