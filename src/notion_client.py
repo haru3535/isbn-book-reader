@@ -27,7 +27,10 @@ class NotionClient:
                 return None, "データベースIDの形式が正しくありません"
 
             property_types = self.get_property_mapping(database_id)
+            print(f"[DEBUG] Property types detected: {property_types}")
+            print(f"[DEBUG] Book data - Pages: {book.page_count}, Published: {book.published_date}")
             properties = self._build_properties(book, property_types)
+            print(f"[DEBUG] Properties to send: {list(properties.keys())}")
 
             data = {
                 "parent": {"database_id": clean_db_id},
