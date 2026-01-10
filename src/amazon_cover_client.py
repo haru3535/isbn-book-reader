@@ -46,11 +46,53 @@ class AmazonCoverClient:
 
         return None
 
-    def get_book_info(self, isbn: str) -> Optional[BookInfo]:
-        """Amazonの商品ページから書籍情報を取得"""
+    def get_book_info_by_title(self, title: str, author: Optional[str] = None, isbn: Optional[str] = None) -> Optional[BookInfo]:
+        """タイトル名でAmazonを検索して書籍情報を取得"""
         try:
-            # Amazon商品ページURL
-            url = f"https://www.amazon.co.jp/dp/{isbn}"
+            # 検索クエリの構築
+            search_query = title
+            if author:
+                search_query = f"{title} {author}"
+
+            search_url = f"https://www.amazon.co.jp/s?k={quote(search_query)}&i=stripbooks"
+            print(f"[DEBUG Amazon Title Search] Searching: {search_query}")
+
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept-Language': 'ja-JP,ja;q=0.9',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+            }
+
+            response = requests.get(search_url, headers=headers, timeout=15)
+            if response.status_code != 200:
+                print(f"[DEBUG Amazon Title Search] Search failed: {response.status_code}")
+                return None
+
+            html = response.text
+
+            # 書籍の商品のみを取得（data-asinとs-result-itemを持つもの）
+            # 書籍のASINは通常ISBNと同じ13桁（978...）または10桁
+            asin_pattern = r'data-asin="((?:978[0-9]{10}|[0-9]{10}))"'
+            asin_matches = re.findall(asin_pattern, html)
+
+            if not asin_matches:
+                print(f"[DEBUG Amazon Title Search] No book ASIN found in search results")
+                return None
+
+            # 最初の書籍のASINを使用
+            asin = asin_matches[0]
+            print(f"[DEBUG Amazon Title Search] Found book ASIN: {asin}")
+
+            # 商品ページから詳細情報を取得
+            return self._get_book_info_from_url(f"https://www.amazon.co.jp/dp/{asin}", isbn or asin)
+
+        except Exception as e:
+            print(f"[DEBUG Amazon Title Search] Exception: {str(e)}")
+            return None
+
+    def _get_book_info_from_url(self, url: str, isbn: str) -> Optional[BookInfo]:
+        """Amazon商品ページURLから書籍情報を取得"""
+        try:
             print(f"[DEBUG Amazon] Fetching {url}")
 
             headers = {
@@ -100,12 +142,34 @@ class AmazonCoverClient:
                 except ValueError:
                     pass
 
-            # 表紙画像取得
+            # 表紙画像取得（複数のパターンを試す）
             cover_url = None
+
+            # パターン1: landingImage
             img_match = re.search(r'<img[^>]*id="landingImage"[^>]*src="([^"]+)"', html)
             if img_match:
                 cover_url = img_match.group(1)
-                # 高解像度画像に変更
+
+            # パターン2: imgTagWrapper内の画像
+            if not cover_url:
+                img_match = re.search(r'<div[^>]*id="imgTagWrapperId"[^>]*>.*?<img[^>]*src="([^"]+)"', html, re.DOTALL)
+                if img_match:
+                    cover_url = img_match.group(1)
+
+            # パターン3: ebooksImg
+            if not cover_url:
+                img_match = re.search(r'<img[^>]*id="ebooksImg"[^>]*src="([^"]+)"', html)
+                if img_match:
+                    cover_url = img_match.group(1)
+
+            # パターン4: Amazon画像URLの一般的なパターン
+            if not cover_url:
+                img_match = re.search(r'https://m\.media-amazon\.com/images/I/[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.jpg', html)
+                if img_match:
+                    cover_url = img_match.group(0)
+
+            # 高解像度画像に変更
+            if cover_url:
                 cover_url = re.sub(r'\._[A-Z0-9_]+_', '._SL500_', cover_url)
 
             # 説明取得
@@ -145,3 +209,7 @@ class AmazonCoverClient:
             traceback.print_exc()
 
         return None
+
+    def get_book_info(self, isbn: str) -> Optional[BookInfo]:
+        """ISBNでAmazonの商品ページから書籍情報を取得"""
+        return self._get_book_info_from_url(f"https://www.amazon.co.jp/dp/{isbn}", isbn)
